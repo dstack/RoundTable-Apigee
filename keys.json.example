@@ -1,0 +1,6 @@
+{
+	"apigee-orgName": "your org name",
+	"apigee-appName": "round_table",
+	"apigee_clientId": "your client ID",
+	"apigee_clientSecret": "your client secret"
+}
