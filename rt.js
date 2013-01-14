@@ -14,6 +14,14 @@ swig.init({
 	extensions: {}
 });
 
+var client = new usergrid.client({
+	orgName:      keys['apigee-orgName'],
+	appName:      keys['apigee-appName'],
+	authType:     usergrid.AUTH_CLIENT_ID,
+    clientId:     keys['apigee_clientId'],
+    clientSecret: keys['apigee_clientSecret']
+});
+
 function view(file, ctx){
 	var tpl = swig.compileFile(file);
 	return tpl.render(ctx);
@@ -24,6 +32,12 @@ var app = connect(quip())
 	.use(connect.cookieParser('Archimedes'))
 	.use(connect.session({ secret: 'Merlin had an Owl, hoot hoot!'}))
 	.use(connect.bodyParser())
+	.use(function(req,res,next){
+		req.ctx = {
+			user: req.session && req.session.user? req.session.user : false
+		};
+		next();
+	})
 	.use(dispatch({
 		'/auth':{
 			'GET /register': function(req,res,next){
@@ -32,9 +46,82 @@ var app = connect(quip())
 			'GET /login': function(req,res,next){
 				res.ok(view('login.html'));
 			},
-			'GET /logout': function(req,res,next){},
+			'GET /logout': function(req,res,next){
+				req.session.user = false;
+				client.logout();
+				client.authType = usergrid.AUTH_CLIENT_ID;
+				res.redirect('/')
+			},
+			'POST /register': function(req,res,next){
+				var formBody = req.body;
+				// email, password, passwordConfirm
+				if(formBody.email && formBody.password && formBody.passwordConfirm && formBody.password == formBody.passwordConfirm){
+					client.request({
+						method:'POST',
+						endpoint:'users',
+						body:{ username: formBody.email, password: formBody.password }
+					}, function(err, data){
+						if(err){
+							req.ctx.errors = [{msg: JSON.stringify(err)}];
+							res.ok(view('register.html', req.ctx));
+						}else{
+							if(formBody.email && formBody.password){
+								client.login(formBody.email, formBody.password, function(err){
+									if(err){
+										req.ctx.errors = [{msg: 'No such user'}]
+										res.ok(view('login.html', req.ctx));
+										return;
+									}
+									client.authType = usergrid.AUTH_APP_USER;
+									client.getLoggedInUser(function(err, data, user){
+										if(err){
+											console.log('could not get logged in user');
+										} else {
+											//you can then get info from the user entity object:
+											req.session.user = user;
+											res.redirect('/');
+										}
+									});
+								});
+							}
+							else{
+								req.ctx.errors = [{msg: 'Form is incomplete'}]
+								res.ok(view('register.html', req.ctx));
+							}
+						}
+					});
+				}
+				else{
+					req.ctx.errors = [{msg: 'Form is incomplete'}]
+					res.ok(view('register.html', req.ctx));
+				}
+			},
 			'POST': function(req,res,next){
-				// attempt login
+				var formBody = req.body;
+				// email, password
+				if(formBody.email && formBody.password){
+					client.login(formBody.email, formBody.password, function(err){
+						if(err){
+							req.ctx.errors = [{msg: 'No such user'}]
+							res.ok(view('login.html', req.ctx));
+							return;
+						}
+						client.authType = usergrid.AUTH_APP_USER;
+						client.getLoggedInUser(function(err, data, user){
+							if(err){
+								console.log('could not get logged in user');
+							} else {
+								//you can then get info from the user entity object:
+								req.session.user = user;
+								res.redirect('/');
+							}
+						});
+					});
+				}
+				else{
+					req.ctx.errors = [{msg: 'Form is incomplete'}]
+					res.ok(view('register.html', req.ctx));
+				}
 			}
 		},
 		'/presentations': {
@@ -71,7 +158,7 @@ var app = connect(quip())
 			}
 		},
 		'.+': function(req,res,next){
-			res.ok(view('index.html'));
+			res.ok(view('index.html', req.ctx));
 		}
 	}))
 

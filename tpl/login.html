@@ -36,11 +36,18 @@
     </style>
 
     <div class="container">
-
-      <form class="form-signin">
+      {% if errors && errors.length > 0 %}
+        <div class="alert alert-error">
+          <strong>Oh snap!</strong>  Change a few things up and try submitting again.
+          {% for error in errors %}
+          <p>- {{ error.msg }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+      <form name="login-form" action="/auth" method="post" class="form-signin">
         <h2 class="form-signin-heading">Please sign in</h2>
-        <input type="text" class="input-block-level" placeholder="Email address">
-        <input type="password" class="input-block-level" placeholder="Password">
+        <input type="text" class="input-block-level" name="email" placeholder="Email address" />
+        <input type="password" class="input-block-level" name="password" placeholder="Password" />
         <button class="btn btn-large btn-primary" type="submit">Sign in</button>
       </form>
 

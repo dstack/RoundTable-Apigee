@@ -10,10 +10,12 @@
 			<p>
 				The traditional presentation deck brings a lot of problems along with it.  Viewers have to wait to ask questions or interrupt and disrupt everyone.  We think that's wrong, and we aim to change it.
 			</p>
+			{% if !user %}
 			<div class="btn-group">
 				<a href="/auth/login" class="btn btn-primary btn-large">Login</a>
 				<a href="/auth/register" class="btn btn-inverse btn-large">Register</a>
 			</div>
+			{% endif %}
 		</div>
 
 		// more intro copy here
