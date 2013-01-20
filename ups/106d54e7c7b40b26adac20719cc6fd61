@@ -1,0 +1,65 @@
+<div class="slides">
+    <section>
+        <h1>how to roundtable</h1>
+        <p>A Simple Demonstration</p>
+    </section>
+    <section>
+        <h2>First</h2>
+        <div>You're going to need something to present!</div>
+        <div>
+            <br>
+        </div>
+        <div>(I know, that seemed obvious to me too)</div>
+    </section>
+    <section>
+    <h2>If you Don't Have a Reveal.js deck handy ...</h2>
+    <div>Head over to http://rvl.io to start creating a presentation!<br>
+        <br>When you're done, hit export to get the code you need, and save it to a file on your computer.</div>
+    </section>
+    <section>
+        <h2>Upload to Round table</h2>
+        <div>Add a New Presentation in Round Table,<br>upload the file you created.</div>
+    </section>
+    <section>
+        <h2>almost there ...</h2>
+        <div>Now you have the presentation!</div>
+        <div>
+            <br>
+        </div>
+        <div>Start a presentation session with it.<br>You will get a QR code to point your presenter device at.</div>
+        <div>
+            <br>
+        </div>
+    </section>
+    <section>
+        <h2>DONE!</h2>
+        <div>Now you're presenting with Round Table.</div>
+        <div>
+            <br>
+        </div>
+        <div>From the presenter interface, you can show viewers a QR code</div>
+        <div>to let them connect and view your presentation</div>
+        <div>on their mobile device, and ask questions as you go.</div>
+        <div>
+            <br>
+        </div>
+        <div>YOU control the flow of questions, meaning</div>
+        <div>no one has to wait to ask,</div>
+        <div>and no one has to interrupt.</div>
+    </section>
+    <section>
+        <h2>WANT MORE?</h2>
+        <div>Round Table is the original title of the project,</div>
+        <div>developed during a Hackathon in Dec. 2012.</div>
+        <div>
+            <br>
+        </div>
+        <div>Round Table was created by Drew Strickland</div>
+        <div>and Annie MacMackin, two innovative and driven hackers.</div>
+        <div>
+            <br>
+        </div>
+        <div>This same technology will be used to create a platform</div>
+        <div>for use by presenters and educators. &nbsp;Stay tuned.</div>
+    </section>
+</div>

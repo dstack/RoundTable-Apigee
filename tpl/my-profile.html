@@ -1,0 +1,47 @@
+{% extends 'common/layout.html' %}
+
+{% block bodyContent %}
+	<div class="container">
+		<div class="row">
+			<div class="span3">
+				<div class="well">
+					<p>
+						Welcome back {{ user.username }}
+					</p>
+				</div>
+			</div>
+			<div class="span9">
+				<h3>Your Presentations</h3>
+				{% if presentations.length > 0 %}
+					<ol>
+						{% for pres in presentations %}
+						<li>
+							<a href="/set-the-table/{{ pres.uuid }}">{{ pres.name }}</a>
+						</li>
+						{% endfor %}
+					</ol>
+				{% else %}
+					<p>
+						You have no presentations.  Try uploading one.
+					</p>
+				{% endif %}
+				<a id="show-upload-form" href="#" class="btn btn-primary" /><i class="icon-arrow-up icon-white"></i> Upload a Presentation</a>
+				<form name="pres-up" action="/presentations" method="post" style="display: none;" enctype="multipart/form-data">
+					<input type="file" id="file-upload-field" name="file" />
+				</form>
+			</div>
+		</div>
+	</div>
+	<script>
+		head.ready('jquery', function(){
+			$('#show-upload-form').click(function(){
+				$('form[name="pres-up"]').show('fast');
+				$(this).hide('fast');
+				return false;
+			});
+			$('#file-upload-field').change(function(){
+				$(this).parent('form').submit();
+			});
+		});
+	</script>
+{% endblock %}
