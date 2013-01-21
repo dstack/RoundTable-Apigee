@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<title>Round Table</title>
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<!--<meta name="viewport" content="width=device-width, initial-scale=1.0" />-->
 		<link rel="stylesheet" href="/css/reveal.min.css" />
 		<link rel="stylesheet" href="/css/theme/default.css"/>
 		<script src="/js/head.min.js"></script>
@@ -65,11 +65,14 @@
 				position: fixed;
 				bottom: 0px;
 				left: 0px;
+				z-index: 109;
+				width: 100%;
 			}
 			#interrupt-form{
 				position: fixed;
 				bottom: 0px;
 				right: 0px;
+				z-index: 109;
 			}
 		</style>
 		{% block addHead %}{% endblock %}

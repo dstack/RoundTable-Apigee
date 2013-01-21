@@ -10,16 +10,18 @@
 			{{ deckContents }}
 		{% endautoescape %}
 	</div>
-	<div id="deck-controls">
-		<div class="btn-group" data-toggle="buttons-checkbox">
+	<div id="deck-controls" class="btn-toolbar">
+		<div class="btn-group">
 			<a href="#prev" class="btn btn-large">Prev</a>
 			<a href="#next" class="btn btn-large">Next</a>
-		</div><br/><br/>
-		<a href="#show-connect-info" class="btn btn-inverse btn-block">Show Connection Info</a>
+		</div>
+		<div class="btn-group pull-right">
+			<a href="#show-connect-info" class="btn btn-inverse btn-large">Show Connection Info</a>
+		</div>
 		<div id="interrupts"></div>
 	</div>
 	<script>
-		head.ready('reveal', function(){
+		head.ready('socketio', function(){
 			Reveal.initialize({
 				controls: false,
 				progress: false,
@@ -28,8 +30,6 @@
 				loop: true,
 				mouseWheel: false
 			});
-		});
-		head.ready('socketio', function(){
 			var socket = io.connect('/{{ room }}');
 			socket.emit('controller-connect');
 			socket.on('next', function(){ Reveal.next(); });
