@@ -1,0 +1,38 @@
+{% extends 'common/deck.html' %}
+{% block addHead %}
+	<link rel="stylesheet" href="/css/bootstrap.min.css" />
+{% endblock %}
+{% block deckContent %}
+	<div class="reveal"> 
+		{% autoescape false %}
+			{{ deckContents }}
+		{% endautoescape %}
+	</div>
+	<form id="interrupt-form" name="interrupt" action="#" method="post">
+		<textarea class="input-block-level" name="question" placeholder="Ask any questions"></textarea>
+		<input type="submit" name="submit" class="btn btn-primary btn-block" value="Ask a Question" />
+	</form>
+	<script>
+		head.ready('reveal', function(){
+			Reveal.initialize({
+				controls: false,
+				progress: false,
+				history: false,
+				keyboard: false,
+				loop: true,
+				mouseWheel: false
+			});
+		});
+		head.ready('socketio', function(){
+			var socket = io.connect('/{{ room }}');
+			socket.on('next', function(){ Reveal.next(); });
+			socket.on('prev', function(){ Reveal.prev(); });
+			$('form[name="interrupt"]').submit(function(){
+				var text = $(this).find('[name="question"]').val();
+				socket.emit('interrupt', {text: text});
+				$(this).find('[name="question"]').val('');
+				return false;
+			});
+		});
+	</script>
+{% endblock %}

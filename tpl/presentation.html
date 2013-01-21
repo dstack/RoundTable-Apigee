@@ -1,7 +1,48 @@
-{% extends 'common/layout.html' %}
+{% extends 'common/deck.html' %}
 
-{% block bodyContent %}
-	{% autoescape false %}
-		{{ deckContents }}
-	{% endautoescape %}
+{% block deckContent %}
+	<div class="reveal"> 
+		{% autoescape false %}
+			{{ deckContents }}
+		{% endautoescape %}
+	</div>
+	<script>
+		head.ready('reveal', function(){
+			Reveal.initialize({
+				controls: false,
+				progress: false,
+				history: false,
+				keyboard: false,
+				loop: true,
+				mouseWheel: false
+			});
+		});
+		head.ready('qrcode', function(){
+			$('#viewer-qr').attr('href', viewLink).qrcode(viewLink);
+			$('#controller-qr').attr('href', presentLink).qrcode(presentLink);
+		});
+		head.ready('socketio', function(){
+			var socket = io.connect('/{{ room }}');
+			socket.emit('check-for-controller');
+			socket.on('no-controller', function(data){
+				$('#presenter-details').show();
+				$('#viewer-qr').hide();
+				$('#conn-details-overlay').fadeIn('fast');
+			});
+			socket.on('yes-controller', function(data){
+				$('#presenter-details').hide();
+				$('#viewer-qr').show();
+				$('#conn-details-overlay').fadeOut('fast');
+			});
+			socket.on('toggle-connect-data', function(){
+				$('#conn-details-overlay').fadeToggle('fast');
+			});
+			socket.on('next', function(){ Reveal.next(); $('.interrupt:visible').hide('fast'); });
+			socket.on('prev', function(){ Reveal.prev(); $('.interrupt:visible').hide('fast'); });
+			socket.on('show-interrupt', function(inter){
+				var newin = $('<div id="inter-'+Math.floor(Math.random()*999999)+'" class="interrupt"><div class="inner">'+inter.text+'</div></div>');
+				$($('body').get(0)).append(newin);
+			});
+		});
+	</script>
 {% endblock %}

@@ -6,7 +6,8 @@ var connect = require('connect'),
 	swig = require('swig'),
 	keys = require(__dirname + '/keys'),
 	PATH = require('path'),
-	fs   = require('fs');
+	fs   = require('fs'),
+	tnr  = require('2nr13');
 
 swig.init({
 	cache: false,
@@ -53,6 +54,23 @@ function getDeckBySessionId(id, cb){
 	});
 }
 
+function logDeckSessionEvent(id, eventData){
+	var ts = Date.NOW,
+		ropt = {
+		method: 'PUT',
+		endpoint: 'deckSessions',
+		uuid: id,
+		body:{}
+	};
+	ropt.body['evt-'+ts] = eventData;
+	client.request(ropt,function(err,deckSession){
+		if(err){
+			return console.log('unable to log deck session details');
+		}
+	});
+}
+var roomsWithControllers = new Array();
+var io;
 var app = connect(quip())
 	.use(connect.multipart({ uploadDir: __dirname + '/ups' }))
 	.use(connect.static(__dirname + '/public'))
@@ -204,20 +222,86 @@ var app = connect(quip())
 				// fire and forget, create deck
 				client.createEntity(deckSession, function(err,data){
 					if(err){ res.error('Could not set the table'); return; }
-					req.session.currentDeckRoom = data._data.uuid;
-					res.redirect('/big-screen/'+data._data.uuid);
+					var roomId = data._data.uuid;
+					req.session.currentDeckRoom = roomId
+					req.session.presentSecret = tnr.encode(roomId);
+					res.redirect('/big-screen/'+roomId);
+					//setup the socket.io namespace
+					io
+						.of('/'+roomId)
+						.on('connection', function(socket){
+							socket.on('show-connect-data', function(){
+								socket.broadcast.emit('toggle-connect-data');
+							});
+							socket.on('go-to-next', function(){
+								socket.broadcast.emit('next');
+								socket.emit('next');
+								logDeckSessionEvent(roomId, {
+									evtName: 'next'
+								});
+							});
+							socket.on('go-to-prev', function(){
+								socket.broadcast.emit('prev');
+								socket.emit('prev');
+								logDeckSessionEvent(roomId, {
+									evtName: 'prev'
+								});
+							});
+							socket.on('interrupt', function(data){
+								socket.broadcast.emit('interrupt', data);
+								logDeckSessionEvent(roomId, {
+									evtName: 'interrupt',
+									evtData: data
+								});
+							});
+							socket.on('go-interrupt', function(data){
+								console.log('sending interrupt to the front end');
+								socket.broadcast.emit('show-interrupt', data);
+								logDeckSessionEvent(roomId, {
+									evtName: 'go-interrupt',
+									evtData: data
+								});
+							});
+							socket.on('check-for-controller', function(){
+								if(roomsWithControllers.indexOf(roomId) < 0){
+									socket.emit('no-controller');
+								}
+								else{
+									socket.emit('yes-controller');
+								}
+							});
+							socket.on('controller-connect', function(){
+								socket.broadcast.emit('yes-controller');
+								roomsWithControllers.push(roomId);
+							})
+						});
 				});
 			});
 		},
-		'/present/:id': function(req,res,next,id){},
+		'/present/:id': function(req,res,next,id){
+			getDeckBySessionId(id, function(err,deck,deckFile){
+				req.ctx.deckContents = deckFile;
+				req.ctx.deck = deck;
+				req.ctx.room = id;
+				res.ok(view('presenter.html',req.ctx))
+			});
+		},
 		'/big-screen/:id': function(req,res,next,id){
 			getDeckBySessionId(id, function(err,deck,deckFile){
 				req.ctx.deckContents = deckFile;
 				req.ctx.deck = deck;
+				req.ctx.room = id;
 				res.ok(view('presentation.html',req.ctx))
 			});
 		},
-		'/view/:id': function(req,res,next,id){},
+		'/view/:id': function(req,res,next,id){
+			getDeckBySessionId(id, function(err,deck,deckFile){
+				req.ctx.deckContents = deckFile;
+				req.ctx.deck = deck;
+				req.ctx.room = id;
+				res.ok(view('viewer.html',req.ctx))
+			});
+		},
 		'.+': function(req,res,next){
 			res.ok(view('index.html', req.ctx));
 		}
@@ -225,10 +309,9 @@ var app = connect(quip())
 
 
 var server = app.listen(4295);
+io = require('socket.io').listen(server);
 
 console.log('Round table listening on http://localhost:4295')
-
-var io = require('socket.io').listen(server);
 
 // socket.io config
 io.enable('browser client minification');
@@ -242,39 +325,3 @@ io.set('transports', [
 	, 'xhr-polling'
 	, 'jsonp-polling'
 ]);
-
-// this is where the real time happens
-
-io.sockets.on('connection', function(socket){
-	console.log('socket connected');
-	socket.on('present-rt', function(data){
-		socket.join(data.rtid);
-		socket.set('presenting-on', data.rtid, function(){
-			socket.emit('ready-to-present')
-		});
-	});
-	socket.on('show-connect-data', function(data){
-		//io.sockets.in(data.rtid).emit
-		//var id = data.rtid;
-		console.log('show connection data');
-		socket.broadcast.emit('toggle-connect-data', data)
-	});
-	socket.on('join', function(data){
-		socket.join(data.rtid);
-	});
-	socket.on('go-to-next', function(data){
-		socket.broadcast.emit('next', data)
-	});
-	socket.on('go-to-prev', function(data){
-		socket.broadcast.emit('prev', data)
-	});
-	socket.on('interrupt', function(data){
-		socket.broadcast.emit('interrupt', data)
-		//get the interupt text and interrupt user,
-		// cycle this event to ONLY the presenter socket
-	});
-	socket.on('go-interrupt', function(data){
-		console.log('sending interrupt to the front end');
-		socket.broadcast.emit('show-interrupt', data)
-	})
-});

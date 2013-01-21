@@ -1,0 +1,67 @@
+{% extends 'common/deck.html' %}
+
+{% block addHead %}
+	<link rel="stylesheet" href="/css/bootstrap.min.css" />
+{% endblock %}
+
+{% block deckContent %}
+	<div class="reveal"> 
+		{% autoescape false %}
+			{{ deckContents }}
+		{% endautoescape %}
+	</div>
+	<div id="deck-controls">
+		<div class="btn-group" data-toggle="buttons-checkbox">
+			<a href="#prev" class="btn btn-large">Prev</a>
+			<a href="#next" class="btn btn-large">Next</a>
+		</div><br/><br/>
+		<a href="#show-connect-info" class="btn btn-inverse btn-block">Show Connection Info</a>
+		<div id="interrupts"></div>
+	</div>
+	<script>
+		head.ready('reveal', function(){
+			Reveal.initialize({
+				controls: false,
+				progress: false,
+				history: false,
+				keyboard: false,
+				loop: true,
+				mouseWheel: false
+			});
+		});
+		head.ready('socketio', function(){
+			var socket = io.connect('/{{ room }}');
+			socket.emit('controller-connect');
+			socket.on('next', function(){ Reveal.next(); });
+			socket.on('prev', function(){ Reveal.prev(); });
+			socket.on('interrupt', function(inter){
+				var newi = $('<div class="interrupt">'+inter.text+'</div>');
+				var choice = $('<div class="btn-group" data-toggle="buttons-checkbox"><a href="#decline" class="btn btn-danger"><i class="icon-remove"></i></a><a href="#accept" class="btn btn-success"><i class="icon-ok"></i></a></div>');
+				$('#interrupts').append(newi);
+				newi.append($('<br/>'))
+				newi.append(choice);
+				choice.on('click', 'a[href="#decline"]', function(){
+					$(this).parents('.interrupt').remove();
+					return false;
+				});
+				choice.on('click', 'a[href="#accept"]', function(){
+					socket.emit('go-interrupt', inter);
+					$(this).parents('.interrupt').remove();
+					return false;
+				});
+			});
+			$('a[href="#next"]').click(function(){
+				socket.emit('go-to-next');
+				return false;
+			});
+			$('a[href="#prev"]').click(function(){
+				socket.emit('go-to-prev');
+				return false;
+			});
+			$('a[href="#show-connect-info"]').click(function(){
+				socket.emit('show-connect-data');
+				return false;
+			});
+		});
+	</script>
+{% endblock %}
