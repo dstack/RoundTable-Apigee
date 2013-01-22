@@ -24,7 +24,9 @@
 					<div class="nav-collapse collapse">
 						<ul class="nav">
 							<li class="active"><a href="/">Home</a></li>
-							<li><a href="/about">About</a></li>
+							{% if user %}
+							<li><a href="/presentations">My Presentations</a></li>
+							{% endif %}
 						</ul>
 						{% if user %}
 						<ul class="nav pull-right">
